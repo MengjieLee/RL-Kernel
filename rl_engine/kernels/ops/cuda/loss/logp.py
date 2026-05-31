@@ -3,14 +3,7 @@
 
 import torch
 from rl_engine.utils.logger import logger
-
-try:
-    from rl_engine import _C
-
-    _EXT_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"Core binary extension (_C) unavailable: {e}. Falling back to native code.")
-    _EXT_AVAILABLE = False
+from rl_engine.kernels.ops.base import _C, _EXT_AVAILABLE
 
 
 class FusedLogpSM90Op:
@@ -33,7 +26,7 @@ class FusedLogpSM90Op:
 
 
 class FusedLogpGenericOp:
-    """Generic custom CUDA/ROCm fallback Fused LogP."""
+    """Generic custom CUDA fallback Fused LogP with RL variants."""
 
     def __init__(self):
         if not _EXT_AVAILABLE or not hasattr(_C, "fused_logp"):
@@ -67,24 +60,18 @@ class FusedLogpGenericOp:
         return row_indices.view(-1).to(device=logits.device, dtype=torch.long).contiguous()
 
     def apply(self, logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
-        """Return selected-token log probabilities with output dtype matching logits."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         results = self.op(logits_2d, token_ids_1d)
         return results.view(orig_shape)
 
     def apply_fp32(self, logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
-        """Return selected-token log probabilities in float32."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         results = self._backend.fused_logp_forward_fp32(logits_2d, token_ids_1d)
         return results.view(orig_shape)
 
     def out(
-        self,
-        logits: torch.Tensor,
-        token_ids: torch.Tensor,
-        output: torch.Tensor,
+        self, logits: torch.Tensor, token_ids: torch.Tensor, output: torch.Tensor
     ) -> torch.Tensor:
-        """Write selected-token log probabilities into a caller-provided output tensor."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         output_1d = self._prepare_output(output, orig_shape)
         results = self._backend.fused_logp_forward_out(logits_2d, token_ids_1d, output_1d)
@@ -97,52 +84,33 @@ class FusedLogpGenericOp:
         row_indices: torch.Tensor,
         output: torch.Tensor,
     ) -> torch.Tensor:
-        """Write selected-token log probabilities only for indexed rows."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         row_indices_1d = self._prepare_indices(row_indices, logits)
         output_1d = self._prepare_output(output, orig_shape)
         results = self._backend.fused_logp_forward_indexed_out(
-            logits_2d,
-            token_ids_1d,
-            row_indices_1d,
-            output_1d,
+            logits_2d, token_ids_1d, row_indices_1d, output_1d
         )
         return results.view(orig_shape)
 
     def indexed_fp32(
-        self,
-        logits: torch.Tensor,
-        token_ids: torch.Tensor,
-        row_indices: torch.Tensor,
+        self, logits: torch.Tensor, token_ids: torch.Tensor, row_indices: torch.Tensor
     ) -> torch.Tensor:
-        """Return dense float32 log probabilities with only indexed rows computed."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         row_indices_1d = self._prepare_indices(row_indices, logits)
         results = self._backend.fused_logp_forward_indexed_fp32(
-            logits_2d,
-            token_ids_1d,
-            row_indices_1d,
+            logits_2d, token_ids_1d, row_indices_1d
         )
         return results.view(orig_shape)
 
     def online_out(
-        self,
-        logits: torch.Tensor,
-        token_ids: torch.Tensor,
-        output: torch.Tensor,
+        self, logits: torch.Tensor, token_ids: torch.Tensor, output: torch.Tensor
     ) -> torch.Tensor:
-        """Write selected-token log probabilities using online log-sum-exp."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         output_1d = self._prepare_output(output, orig_shape)
-        results = self._backend.fused_logp_forward_online_out(
-            logits_2d,
-            token_ids_1d,
-            output_1d,
-        )
+        results = self._backend.fused_logp_forward_online_out(logits_2d, token_ids_1d, output_1d)
         return results.view(orig_shape)
 
     def online_fp32(self, logits: torch.Tensor, token_ids: torch.Tensor) -> torch.Tensor:
-        """Return online log-sum-exp selected-token log probabilities in float32."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         results = self._backend.fused_logp_forward_online_fp32(logits_2d, token_ids_1d)
         return results.view(orig_shape)
@@ -154,30 +122,20 @@ class FusedLogpGenericOp:
         row_indices: torch.Tensor,
         output: torch.Tensor,
     ) -> torch.Tensor:
-        """Write online log-sum-exp results only for indexed rows."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         row_indices_1d = self._prepare_indices(row_indices, logits)
         output_1d = self._prepare_output(output, orig_shape)
         results = self._backend.fused_logp_forward_online_indexed_out(
-            logits_2d,
-            token_ids_1d,
-            row_indices_1d,
-            output_1d,
+            logits_2d, token_ids_1d, row_indices_1d, output_1d
         )
         return results.view(orig_shape)
 
     def online_indexed_fp32(
-        self,
-        logits: torch.Tensor,
-        token_ids: torch.Tensor,
-        row_indices: torch.Tensor,
+        self, logits: torch.Tensor, token_ids: torch.Tensor, row_indices: torch.Tensor
     ) -> torch.Tensor:
-        """Return float32 online log-sum-exp results for indexed rows."""
         logits_2d, token_ids_1d, orig_shape = self._prepare_inputs(logits, token_ids)
         row_indices_1d = self._prepare_indices(row_indices, logits)
         results = self._backend.fused_logp_forward_online_indexed_fp32(
-            logits_2d,
-            token_ids_1d,
-            row_indices_1d,
+            logits_2d, token_ids_1d, row_indices_1d
         )
         return results.view(orig_shape)

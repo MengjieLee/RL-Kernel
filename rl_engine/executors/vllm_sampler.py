@@ -160,6 +160,7 @@ class VLLMSharedPrefixSampler:
 def _normalize_prompts(
     prompts: str | Mapping[str, Any] | Sequence[str | Mapping[str, Any]],
 ) -> list[str | Mapping[str, Any]]:
+    prompt_list: list[str | Mapping[str, Any]]
     if isinstance(prompts, str):
         prompt_list = [prompts]
     elif isinstance(prompts, Mapping):

@@ -21,20 +21,20 @@ class _KernelEnumMeta(EnumMeta):
 
 class OpBackend(Enum, metaclass=_KernelEnumMeta):
     # NVIDIA optimized stack
-    FLASH_ATTN = "rl_engine.kernels.cuda.flash_attn.FlashAttentionOp"
-    FLASHINFER = "rl_engine.kernels.cuda.flashinfer.FlashInferOp"
+    FLASH_ATTN = "rl_engine.kernels.ops.cuda.attention.flash_attn.FlashAttentionOp"
+    FLASHINFER = "rl_engine.kernels.ops.cuda.flashinfer.FlashInferOp"
 
     # TMA-accelerated LogP for SM90+ (Warp Specialization)
-    CUDA_FUSED_LOGP_SM90 = "rl_engine.kernels.ops.cuda.FusedLogpSM90Op"
-    CUDA_FUSED_LOGP_GENERIC = "rl_engine.kernels.ops.cuda.FusedLogpGenericOp"
+    CUDA_FUSED_LOGP_SM90 = "rl_engine.kernels.ops.cuda.loss.logp.FusedLogpSM90Op"
+    CUDA_FUSED_LOGP_GENERIC = "rl_engine.kernels.ops.cuda.loss.logp.FusedLogpGenericOp"
 
     # AMD ROCm optimized stack
-    ROCM_AITER = "rl_engine.kernels.rocm.aiter.AiterOp"
-    ROCM_CK = "rl_engine.kernels.rocm.composable_kernel.CKOp"
+    ROCM_AITER = "rl_engine.kernels.ops.rocm.aiter.AiterOp"
+    ROCM_CK = "rl_engine.kernels.ops.rocm.composable_kernel.CKOp"
 
     # Generic fallback
-    TRITON_GENERIC = "rl_engine.kernels.triton.generic.TritonOp"
-    PYTORCH_NATIVE = "rl_engine.kernels.ops.pytorch.NativeOp"
+    TRITON_GENERIC = "rl_engine.kernels.ops.triton.generic.TritonOp"
+    PYTORCH_NATIVE = "rl_engine.kernels.ops.pytorch.loss.logp.NativeLogpOp"
 
 
 class KernelRegistry:
