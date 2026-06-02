@@ -20,7 +20,6 @@ import torch
 
 from rl_engine.utils.logger import logger
 
-
 _BRIDGE_METADATA_KEY = "weight_bridge"
 _SHARED_MEMORY_FORMAT = "python-multiprocessing-shared-memory-v1"
 _CUDA_IPC_FORMAT = "pytorch-cuda-ipc-reduce-tensor-v1"

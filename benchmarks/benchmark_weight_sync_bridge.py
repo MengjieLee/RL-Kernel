@@ -33,7 +33,6 @@ from rl_engine.executors.bridge import (  # noqa: E402
 )
 from rl_engine.executors.rollout import RolloutExecutor  # noqa: E402
 
-
 CSV_COLUMNS = [
     "timestamp",
     "candidate_id",

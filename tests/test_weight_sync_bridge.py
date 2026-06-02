@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import ctypes
-from dataclasses import replace
 import multiprocessing as mp
+from dataclasses import replace
 from queue import Empty
 
 import pytest
@@ -18,8 +18,8 @@ from rl_engine.executors.bridge import (
     LocalTensorCopyBridge,
     SharedMemoryTensorBridge,
     TensorDescriptor,
-    VLLMCUDAVMMExternalStorageAdapter,
     VLLMCheckpointWeightReloadAdapter,
+    VLLMCUDAVMMExternalStorageAdapter,
     VLLMInProcessWeightReloadAdapter,
     VLLMIPCWeightUpdateRequestBuilder,
     VLLMWeightInstallAdapter,

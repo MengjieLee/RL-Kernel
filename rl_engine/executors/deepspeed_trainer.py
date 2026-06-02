@@ -32,7 +32,6 @@ from rl_engine.testing import (
     selected_logprobs_reference,
 )
 
-
 _TDestination = TypeVar("_TDestination", bound=dict[str, Any])
 
 

@@ -2,6 +2,7 @@ nav:
   - Home: README.md
   - User Guide:
     - usage/README.md
+    - usage/weight-sync-bridge.md
     - Getting Started:
       - getting_started/quickstart.md
       - getting_started/installation.md

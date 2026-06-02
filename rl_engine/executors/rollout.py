@@ -3,8 +3,9 @@
 
 from __future__ import annotations
 
-import torch
 from typing import Any, Mapping, Optional, Sequence
+
+import torch
 
 from rl_engine.executors.bridge import (
     WeightBridgeUnavailableError,

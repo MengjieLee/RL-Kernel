@@ -8,3 +8,4 @@ Start with:
 - [Quickstart](../getting_started/quickstart.md)
 - [Installation](../getting_started/installation.md)
 - [Operators](../operators/README.md)
+- [Weight Sync Bridge](weight-sync-bridge.md)

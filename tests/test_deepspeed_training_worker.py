@@ -12,10 +12,7 @@ import time
 import pytest
 import torch
 
-from rl_engine.executors.bridge import (
-    LocalTensorCopyBridge,
-    WeightBridgeUnavailableError,
-)
+from rl_engine.executors.bridge import LocalTensorCopyBridge, WeightBridgeUnavailableError
 from rl_engine.executors.training_contract import RolloutStageResult
 
 
@@ -127,8 +124,9 @@ def test_missing_deepspeed_raises_explicit_blocker(monkeypatch):
 
 
 def test_deepspeed_loader_preserves_explicit_cuda_home(monkeypatch):
-    from rl_engine.executors import deepspeed_trainer
     import torch.utils.cpp_extension as cpp_extension
+
+    from rl_engine.executors import deepspeed_trainer
 
     monkeypatch.setenv("CUDA_HOME", "/custom/cuda")
     monkeypatch.setenv("PATH", "/usr/bin")
@@ -149,8 +147,9 @@ def test_deepspeed_loader_preserves_explicit_cuda_home(monkeypatch):
 
 
 def test_deepspeed_loader_uses_python_cuda_toolkit(monkeypatch, tmp_path):
-    from rl_engine.executors import deepspeed_trainer
     import torch.utils.cpp_extension as cpp_extension
+
+    from rl_engine.executors import deepspeed_trainer
 
     cuda_home = tmp_path / "site-packages" / "nvidia" / "cu13"
     (cuda_home / "bin").mkdir(parents=True)

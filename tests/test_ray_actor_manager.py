@@ -13,10 +13,7 @@ import pytest
 import torch
 
 from rl_engine.executors.bridge import SharedMemoryTensorBridge
-from rl_engine.executors.training_contract import (
-    RolloutStageResult,
-    TrainingStageResult,
-)
+from rl_engine.executors.training_contract import RolloutStageResult, TrainingStageResult
 
 
 @dataclass(frozen=True)
