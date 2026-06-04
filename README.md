@@ -38,9 +38,10 @@ Integrating **FlashInfer** fused kernels to accelerate the bottleneck of RL trai
 
 | Batch Size ($G$) | Native PyTorch | **RL-Kernel (Fused)** | **Speedup** |
 | :--- | :--- | :--- | :--- |
-| 64 | 219.4 ms | **0.55 ms** | **399x** |
-| 128 | 14.08 ms | **0.67 ms** | **21x** |
-| 256 | 25.49 ms | **1.15 ms** | **22x** |
+| 32 | 176.79 ms | **1.08 ms** | **163x** |
+| 64 | 10.54 ms | **1.31 ms** | **8x** |
+| 128 | 18.89 ms | **1.86 ms** | **10x** |
+| 256 | 36.23 ms | **2.94 ms** | **12x** |
 
 ---
 
