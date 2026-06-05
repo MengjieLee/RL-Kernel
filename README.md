@@ -34,6 +34,7 @@ By implementing **Pre-allocated Chunking**, RL-Kernel maintains constant additio
 
 *Note: RL-Kernel is the only solution that successfully scales G=256 on a single A100 by keeping extra VRAM usage to a constant ~0.5GB.*
 
+
 <p align="center">
   <img src="docs/assets/1. VRAM Saving.png" alt="Logprob VRAM Benchmark">
 </p>
@@ -48,6 +49,7 @@ Integrating **FlashInfer** fused kernels to accelerate the bottleneck of RL trai
 | 128 | 18.89 ms | **1.86 ms** | **10x** |
 | 256 | 36.23 ms | **2.94 ms** | **12x** |
 
+
 <p align="center">
   <img src="docs/assets/2. sampling latency.png" alt="Sampling Latency Benchmark">
 </p>
@@ -57,6 +59,7 @@ Integrating **FlashInfer** fused kernels to accelerate the bottleneck of RL trai
 **Testbed**: NVIDIA A100 80GB | **Model**: Qwen3-30B-A3B | **Vocab**: 151,936 | **dtype**: fp16
 
 Model weights consume 56.9 GB — only 23 GB headroom remaining for training computation.
+
 
 <p align="center">
   <img src="docs/assets/3. moe .png" alt="Real Model MoE Benchmark">
@@ -96,3 +99,14 @@ pip install -e .
 Inspired by the kernel designs of vLLM and DeepSpeed. As an active contributor to the AI Infrastructure ecosystem, RL-Kernel aims to push the boundaries of RL efficiency.
 
 Target: Building the most efficient RLHF toolchain for the open-source community.
+
+
+## Acknowledgments
+
+RL-Kernel builds on the shoulders of excellent open-source projects:
+
+- **[FlashInfer](https://github.com/flashinfer-ai/flashinfer)** — We integrate FlashInfer's fused sampling kernels as the NVIDIA backend for our sampling pipeline. The sub-2ms sampling latency results are enabled by FlashInfer's highly optimized CUDA operators.
+- **[vLLM](https://github.com/vllm-project/vllm)** — Inspired by vLLM's kernel design philosophy and hardware-aware scheduling approach.
+- **[DeepSpeed](https://github.com/microsoft/DeepSpeed)** — Inspired by DeepSpeed's approach to memory-efficient training infrastructure.
+
+We are grateful to these teams for their contributions to the open-source AI infrastructure ecosystem.
