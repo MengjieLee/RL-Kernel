@@ -31,12 +31,18 @@ def selected_logprobs_reference(
     if mask is not None and mask.shape != token_ids.shape:
         raise ValueError(f"mask shape {tuple(mask.shape)} must match token_ids shape")
 
+    gather_token_ids = token_ids.long()
+    active_mask = None
+    if mask is not None:
+        active_mask = _bool_mask(mask, device=token_ids.device)
+        gather_token_ids = gather_token_ids.masked_fill(~active_mask, 0)
+
     scaled_logits = logits.float() / float(temperature)
     log_probs = torch.log_softmax(scaled_logits, dim=-1)
-    selected = torch.gather(log_probs, dim=-1, index=token_ids.long().unsqueeze(-1)).squeeze(-1)
+    selected = torch.gather(log_probs, dim=-1, index=gather_token_ids.unsqueeze(-1)).squeeze(-1)
 
-    if mask is not None:
-        selected = selected.masked_fill(~_bool_mask(mask, device=selected.device), 0.0)
+    if active_mask is not None:
+        selected = selected.masked_fill(~active_mask.to(device=selected.device), 0.0)
 
     return selected.to(dtype=output_dtype)
 
