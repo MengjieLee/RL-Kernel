@@ -17,6 +17,26 @@ def _require_tensor(value: Any, source: str) -> torch.Tensor:
     raise TypeError(f"{source} must be a torch.Tensor, got {type(value)!r}")
 
 
+def _has_logits_rank(value: torch.Tensor) -> bool:
+    return value.ndim >= 2
+
+
+def _slice_logits(
+    logits: torch.Tensor,
+    *,
+    logits_start: Optional[int] = None,
+    logits_end: Optional[int] = None,
+) -> torch.Tensor:
+    if logits_start is None and logits_end is None:
+        return logits
+    if logits.ndim < 2:
+        raise ValueError("logits must have at least two dimensions to slice token positions")
+
+    index = [slice(None)] * logits.ndim
+    index[-2] = slice(logits_start, logits_end)
+    return logits[tuple(index)]
+
+
 def extract_logits(model_output: Any) -> torch.Tensor:
     """Extract logits from common model output shapes."""
 
@@ -33,7 +53,23 @@ def extract_logits(model_output: Any) -> torch.Tensor:
         return _require_tensor(logits, "model output.logits")
 
     if isinstance(model_output, (tuple, list)) and model_output:
-        return extract_logits(model_output[0])
+        last_error: Optional[Exception] = None
+        for index, item in enumerate(model_output):
+            try:
+                candidate = extract_logits(item)
+            except TypeError as exc:
+                last_error = exc
+                continue
+            if not _has_logits_rank(candidate):
+                last_error = TypeError(
+                    f"model output sequence item {index} has too few dimensions for logits"
+                )
+                continue
+            return candidate
+        message = "model output sequence does not contain a logits tensor"
+        if last_error is not None:
+            message = f"{message}: {last_error}"
+        raise TypeError(message)
 
     raise TypeError(f"model output does not expose logits: {type(model_output)!r}")
 
@@ -57,11 +93,14 @@ class PolicyModelWrapper(torch.nn.Module):
         token_ids: torch.Tensor,
         *,
         mask: Optional[torch.Tensor] = None,
+        logits_start: Optional[int] = None,
+        logits_end: Optional[int] = None,
         temperature: float = 1.0,
         output_dtype: torch.dtype = torch.float32,
         **model_kwargs: Any,
     ) -> torch.Tensor:
         logits = self.forward_logits(input_ids, **model_kwargs)
+        logits = _slice_logits(logits, logits_start=logits_start, logits_end=logits_end)
         return selected_logprobs_reference(
             logits,
             token_ids,
@@ -102,6 +141,8 @@ class ReferenceModelWrapper(PolicyModelWrapper):
         token_ids: torch.Tensor,
         *,
         mask: Optional[torch.Tensor] = None,
+        logits_start: Optional[int] = None,
+        logits_end: Optional[int] = None,
         temperature: float = 1.0,
         output_dtype: torch.dtype = torch.float32,
         **model_kwargs: Any,
@@ -111,6 +152,8 @@ class ReferenceModelWrapper(PolicyModelWrapper):
                 input_ids,
                 token_ids,
                 mask=mask,
+                logits_start=logits_start,
+                logits_end=logits_end,
                 temperature=temperature,
                 output_dtype=output_dtype,
                 **model_kwargs,

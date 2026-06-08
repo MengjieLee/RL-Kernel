@@ -35,6 +35,8 @@ class FixedLogitsModel(torch.nn.Module):
             return ObjectOutput(logits)
         if self.output_kind == "tuple":
             return (logits, {"hidden_states": None})
+        if self.output_kind == "loss_tuple":
+            return (logits.sum(), logits, {"hidden_states": None})
         raise AssertionError(f"unknown output kind: {self.output_kind}")
 
 
@@ -54,6 +56,20 @@ def test_extract_logits_rejects_missing_or_invalid_logits():
 
     with pytest.raises(TypeError, match=r"torch\.Tensor"):
         extract_logits(ObjectOutput(logits="not-a-tensor"))
+
+
+def test_extract_logits_accepts_loss_first_tuple_outputs():
+    logits = torch.randn(2, 3, 5)
+    model = FixedLogitsModel(logits, output_kind="loss_tuple")
+
+    actual = extract_logits(model(torch.zeros(2, 3, dtype=torch.long)))
+
+    assert torch.allclose(actual, logits)
+
+
+def test_extract_logits_rejects_tuple_without_logits_tensor():
+    with pytest.raises(TypeError, match="does not contain a logits tensor"):
+        extract_logits((torch.tensor(1.0), {"hidden_states": torch.randn(1, 2)}))
 
 
 def test_policy_wrapper_keeps_model_trainable():
@@ -90,6 +106,33 @@ def test_policy_wrapper_selected_logprobs_matches_reference():
 
     assert torch.allclose(actual, expected)
     assert torch.equal(actual[~mask], torch.zeros_like(actual[~mask]))
+
+
+def test_policy_wrapper_selected_logprobs_supports_logits_slice():
+    logits = torch.randn(2, 5, 7)
+    token_ids = torch.tensor([[0, 1, 2], [3, 4, 5]])
+    mask = torch.tensor([[True, True, False], [True, False, True]])
+    input_ids = torch.zeros(2, 5, dtype=torch.long)
+    model = FixedLogitsModel(logits)
+    wrapper = PolicyModelWrapper(model)
+
+    actual = wrapper.selected_logprobs(input_ids, token_ids, mask=mask, logits_start=2)
+    expected = selected_logprobs_reference(logits[:, 2:, :], token_ids, mask=mask)
+
+    assert torch.allclose(actual, expected)
+
+
+def test_policy_wrapper_selected_logprobs_accepts_masked_ignore_index():
+    logits = torch.randn(1, 3, 7)
+    token_ids = torch.tensor([[0, -100, 2]])
+    mask = torch.tensor([[True, False, True]])
+    input_ids = torch.zeros_like(token_ids)
+    model = FixedLogitsModel(logits)
+    wrapper = PolicyModelWrapper(model)
+
+    actual = wrapper.selected_logprobs(input_ids, token_ids, mask=mask)
+
+    assert actual[0, 1] == 0.0
 
 
 def test_policy_wrapper_selected_logprobs_preserves_gradient():

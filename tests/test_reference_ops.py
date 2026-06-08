@@ -39,6 +39,24 @@ def test_selected_logprobs_reference_mask_and_dtype():
     assert torch.equal(actual[~mask], torch.zeros_like(actual[~mask]))
 
 
+def test_selected_logprobs_reference_allows_ignore_index_when_masked_out():
+    logits = torch.randn(1, 3, 6)
+    token_ids = torch.tensor([[1, -100, 2]])
+    mask = torch.tensor([[True, False, True]])
+
+    actual = selected_logprobs_reference(logits, token_ids, mask=mask)
+    safe_token_ids = token_ids.masked_fill(~mask, 0)
+    expected = (
+        torch.log_softmax(logits.float(), dim=-1)
+        .gather(-1, safe_token_ids.unsqueeze(-1))
+        .squeeze(-1)
+        .masked_fill(~mask, 0.0)
+    )
+
+    assert torch.allclose(actual, expected)
+    assert actual[0, 1] == 0.0
+
+
 def test_selected_logprobs_reference_temperature():
     logits = torch.tensor([[1.0, 3.0, -1.0]])
     token_ids = torch.tensor([1])
