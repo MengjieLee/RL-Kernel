@@ -6,7 +6,7 @@ CUDA toolchain; ROCm builds require a compatible ROCm environment.
 ## From Source
 
 ```bash
-git clone https://github.com/Flink-ddd/RL-Kernel.git
+git clone https://github.com/RL-Align/RL-Kernel.git
 cd RL-Kernel
 pip install -e .
 ```
