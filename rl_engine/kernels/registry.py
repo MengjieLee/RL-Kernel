@@ -37,6 +37,13 @@ class OpBackend(Enum, metaclass=_KernelEnumMeta):
     TRITON_GRPO_LOSS = "rl_engine.kernels.ops.triton.triton_grpo_loss.TritonGRPOLossOp"
     PYTORCH_GRPO_LOSS = "rl_engine.kernels.ops.pytorch.loss.grpo_loss.NativeGRPOLossOp"
 
+    # Fused linear log-prob (hidden @ W^T -> selected-token logp, no [N, V] logits)
+    CUDA_FUSED_LINEAR_LOGP_SM90 = (
+        "rl_engine.kernels.ops.cuda.loss.linear_logp.FusedLinearLogpSM90Op"
+    )
+    TRITON_LINEAR_LOGP = "rl_engine.kernels.ops.triton.loss.linear_logp.TritonLinearLogpOp"
+    PYTORCH_LINEAR_LOGP = "rl_engine.kernels.ops.pytorch.loss.linear_logp.NativeLinearLogpOp"
+
     # Generic fallback
     TRITON_GENERIC = "rl_engine.kernels.ops.triton.generic.TritonOp"
     PYTORCH_NATIVE = "rl_engine.kernels.ops.pytorch.loss.logp.NativeLogpOp"
@@ -74,17 +81,20 @@ class KernelRegistry:
                 ],
                 "attn": [OpBackend.FLASH_ATTN, OpBackend.TRITON_GENERIC, OpBackend.PYTORCH_NATIVE],
                 "grpo_loss": [OpBackend.TRITON_GRPO_LOSS, OpBackend.PYTORCH_GRPO_LOSS],
+                "linear_logp": [OpBackend.TRITON_LINEAR_LOGP, OpBackend.PYTORCH_LINEAR_LOGP],
                 # Default dispatch logic for new operators
             },
             "rocm": {
                 "logp": [OpBackend.ROCM_AITER, OpBackend.TRITON_GENERIC, OpBackend.PYTORCH_NATIVE],
                 "attn": [OpBackend.TRITON_GENERIC, OpBackend.PYTORCH_NATIVE],
                 "grpo_loss": [OpBackend.TRITON_GRPO_LOSS, OpBackend.PYTORCH_GRPO_LOSS],
+                "linear_logp": [OpBackend.TRITON_LINEAR_LOGP, OpBackend.PYTORCH_LINEAR_LOGP],
             },
             "cpu": {
                 "logp": [OpBackend.PYTORCH_NATIVE],
                 "attn": [OpBackend.PYTORCH_NATIVE],
                 "grpo_loss": [OpBackend.PYTORCH_GRPO_LOSS],
+                "linear_logp": [OpBackend.PYTORCH_LINEAR_LOGP],
             },
         }
         logger.info(f"KernelRegistry initialized for {device_ctx.device_type}")
@@ -112,6 +122,14 @@ class KernelRegistry:
                 logp_list = self._priority_map["cuda"]["logp"]
                 if OpBackend.CUDA_FUSED_LOGP_SM90 not in logp_list:
                     logp_list.insert(0, OpBackend.CUDA_FUSED_LOGP_SM90)
+
+            # The fused linear-logp SM90 kernel uses WGMMA, which is Hopper-only
+            # (sm_90a) -- gate strictly on cc_major == 9, not >= 9.
+            linear_logp_compiled = _EXT_AVAILABLE and hasattr(_C, "fused_linear_logp_sm90")
+            if linear_logp_compiled and cc_major == 9:
+                ll_list = self._priority_map["cuda"]["linear_logp"]
+                if OpBackend.CUDA_FUSED_LINEAR_LOGP_SM90 not in ll_list:
+                    ll_list.insert(0, OpBackend.CUDA_FUSED_LINEAR_LOGP_SM90)
             elif cc >= 90:
                 logger.debug(
                     f"SM{cc}: fused TMA LogP kernel not compiled into _C; "

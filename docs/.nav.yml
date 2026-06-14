@@ -10,6 +10,7 @@ nav:
     - Operators:
       - operators/README.md
       - operators/fused-logp.md
+      - operators/linear-logp.md
       - operators/sampling.md
   - Developer Guide:
     - contributing/README.md
