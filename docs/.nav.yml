@@ -7,7 +7,6 @@ nav:
     - Getting Started:
       - getting_started/quickstart.md
       - getting_started/installation.md
-      - getting_started/nvidia-a100-validation/index.md
     - Operators:
       - operators/README.md
       - operators/fused-logp.md

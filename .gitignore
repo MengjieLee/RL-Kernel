@@ -155,13 +155,6 @@ venv.bak/
 # mkdocs documentation
 /site
 
-# Local workspace artifacts
-local_workspace/
-.agents/
-.claude/
-skills-lock.json
-ultragoal/
-
 # mypy
 .mypy_cache/
 .dmypy.json
