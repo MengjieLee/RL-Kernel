@@ -1,0 +1,57 @@
+{
+  "artifact": "local_workspace/issue-83-a100-speculative-rollout/issue_83_a100_speculative_rollout_plan.ipynb",
+  "purpose": "Trace the local validation that backed the issue #83 A100 speculative-rollout roadmap notebook.",
+  "environment_observation": {
+    "gpu_observation": "Implementation probe reported 8 visible A100 GPUs.",
+    "vllm_status": "unavailable during local validation",
+    "scope_note": "No real vLLM rollout, PagedAttention integration, speculative decoding, or 8xA100 benchmark was executed. The notebook is a roadmap and validation harness."
+  },
+  "commands": [
+    {
+      "name": "notebook_json_validity",
+      "command": "python - <<'PY'\nimport json\nfrom pathlib import Path\npath = Path('local_workspace/issue-83-a100-speculative-rollout/issue_83_a100_speculative_rollout_plan.ipynb')\njson.loads(path.read_text())\nprint('ok')\nPY",
+      "result": "passed"
+    },
+    {
+      "name": "pure_python_notebook_logic",
+      "command": "Executed the notebook code cells that do not require CUDA, vLLM, or model weights.",
+      "result": "passed",
+      "observed_summary": {
+        "executed_code_cells": 7,
+        "ranked_top": "WS3",
+        "matrix_rows": 129600,
+        "status_values": [
+          "blocked",
+          "fallback",
+          "not_applicable",
+          "pass"
+        ]
+      }
+    },
+    {
+      "name": "cpu_safe_sampler_tests",
+      "command": "python -m pytest tests/test_vllm_rollout_sampler.py -q",
+      "result": "passed",
+      "observed_summary": "14 passed"
+    }
+  ],
+  "review_summary": {
+    "independent_reviews": [
+      "review-a: accepted with minor reservations",
+      "review-b: accepted with minor non-blocking caveats",
+      "review-c: accepted with no blocking issues"
+    ],
+    "cross_reviews": [
+      "cross-review-a: no blocking issues remain",
+      "cross-review-b: executable notebook quality confirmed",
+      "cross-review-c: issue #83 alignment and non-claim boundaries confirmed"
+    ]
+  },
+  "commit_hygiene": {
+    "branch": "issue-83-a100-speculative-rollout",
+    "excluded_from_intended_commit": [
+      ".gitignore",
+      "ultragoal/ workflow artifacts"
+    ]
+  }
+}

@@ -206,3 +206,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Local personal workspace and agent artifacts
+/.agents/
+/.claude/
+/local_workspace/
+/skills-lock.json
+/ultragoal/
